@@ -10,16 +10,114 @@
 function saveAsFile(){const data={productName:productName.value,workDate:workDate.value,leader:leader.value,night:night.value,late:late.value,early:early.value,rows:[]};document.querySelectorAll("#tableBody tr").forEach(row=>{const r=[];row.querySelectorAll("input,textarea").forEach(el=>r.push(el.type==="checkbox"?el.checked:el.value));data.rows.push(r);});const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const pn=productName.value||"未輸入製品名";const wd=((workDate.value)||new Date().toISOString().split("T")[0]).replace(/-/g,"");const a=document.createElement("a");const url=URL.createObjectURL(blob);a.href=url;a.download=`抄紙4号機_${pn}_${wd}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);}
 
 async function saveAsFile(){
-const data={productName:productName.value,workDate:workDate.value,leader:leader.value,night:night.value,late:late.value,early:early.value,rows:[]};
-document.querySelectorAll("#tableBody tr").forEach(row=>{const r=[];row.querySelectorAll("input,textarea").forEach(el=>r.push(el.type==="checkbox"?el.checked:el.value));data.rows.push(r);});
-const pn=productName.value||"未輸入製品名";
-const wd=((workDate.value)||new Date().toISOString().split("T")[0]).replace(/-/g,"");
-try{
-const handle=await window.showSaveFilePicker({suggestedName:`抄紙4号機_${pn}_${wd}.json`,types:[{description:'JSON File',accept:{'application/json':['.json']}}]});
-const writable=await handle.createWritable();
-await writable.write(JSON.stringify(data,null,2));
-await writable.close();
-}catch(e){if(e.name!=='AbortError') alert('另存新檔失敗：'+e.message);}
+
+    const data = {
+        productName: productName.value,
+        workDate: workDate.value,
+        leader: leader.value,
+        night: night.value,
+        late: late.value,
+        early: early.value,
+        rows:[]
+    };
+
+    document.querySelectorAll("#tableBody tr")
+    .forEach(row=>{
+
+        const rowData=[];
+
+        row.querySelectorAll("input,textarea")
+        .forEach(el=>{
+
+            rowData.push(
+                el.type==="checkbox"
+                ? el.checked
+                : el.value
+            );
+
+        });
+
+        data.rows.push(rowData);
+
+    });
+
+    const product =
+        productName.value ||
+        "未輸入製品名";
+
+    const date =
+        (
+            workDate.value ||
+            new Date().toISOString().split("T")[0]
+        ).replaceAll("-","");
+
+    const fileName =
+        `抄紙4号機_${product}_${date}.json`;
+
+    if(window.showSaveFilePicker){
+
+        try{
+
+            const handle =
+            await window.showSaveFilePicker({
+
+                suggestedName:fileName,
+
+                types:[{
+                    description:"JSON",
+
+                    accept:{
+                        "application/json":
+                        [".json"]
+                    }
+                }]
+            });
+
+            const writable =
+            await handle.createWritable();
+
+            await writable.write(
+                JSON.stringify(data,null,2)
+            );
+
+            await writable.close();
+
+            return;
+
+        }
+        catch(e){
+
+            if(e.name==="AbortError"){
+                return;
+            }
+
+        }
+
+    }
+
+    const blob =
+    new Blob(
+        [JSON.stringify(data,null,2)],
+        {type:"application/json"}
+    );
+
+    const url =
+    URL.createObjectURL(blob);
+
+    const a =
+    document.createElement("a");
+
+    a.href = url;
+    a.download = fileName;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+
 }
 
 </script>
