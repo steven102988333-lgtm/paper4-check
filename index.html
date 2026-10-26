@@ -106,7 +106,7 @@
     border: 1px solid #d9d9d9;
   }
 
-  /* 完美的統計卡片樣式（對應圖片設計） */
+  /* 統計卡片樣式 */
   .sensor-card {
     margin-left: auto;
     min-width: 140px;
@@ -203,6 +203,30 @@
     resize: vertical;
   }
 
+  /* 數量調整小群組（專為平板/手機友善設計） */
+  .stepper-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .stepper-btn {
+    background: #f0f0f0;
+    border: 1px solid #d9d9d9;
+    color: #333;
+    font-size: 12px;
+    font-weight: bold;
+    width: 24px;
+    height: 26px;
+    padding: 0;
+    min-height: unset;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .stepper-btn:active {
+    background: #d9d9d9;
+  }
+
   .sensor-input-anomaly {
     background-color: #ff4d4f !important;
     color: white !important;
@@ -211,7 +235,7 @@
   }
 
   @media print {
-    .btn-area, .delete-btn, .batch-add-group { display: none !important; }
+    .btn-area, .delete-btn, .batch-add-group, .stepper-btn { display: none !important; }
     body { margin: 0; background: #fff; }
     .table-container { box-shadow: none; }
     @page { size: A4 landscape; margin: 5mm; }
@@ -260,7 +284,6 @@
   <button class="print-btn" onclick="window.print()">印刷</button>
   <button id="lockBtn" class="lock-btn" onclick="toggleLock()">編集保護: OFF</button>
 
-  <!-- 圖片中的卡片樣式 -->
   <div class="sensor-card">
     <div class="sensor-card-title">センサ件数 (N/S)</div>
     <div id="sensorValue" class="sensor-card-value">0</div>
@@ -306,16 +329,22 @@ let isLocked = false;
 function toggleLock() {
   isLocked = !isLocked;
   const btn = document.getElementById('lockBtn');
-  const elements = document.querySelectorAll('input, textarea, select');
+  const elements = document.querySelectorAll('input, textarea, select, .stepper-btn');
   
   elements.forEach(el => {
     if (el.id !== 'rowCountSelect' && el.id !== 'fileInput') {
       if (isLocked) {
-        el.setAttribute('readonly', true);
-        if (el.type === 'checkbox') el.disabled = true;
+        if(el.tagName === 'BUTTON') el.disabled = true;
+        else {
+          el.setAttribute('readonly', true);
+          if (el.type === 'checkbox') el.disabled = true;
+        }
       } else {
-        el.removeAttribute('readonly');
-        if (el.type === 'checkbox') el.disabled = false;
+        if(el.tagName === 'BUTTON') el.disabled = false;
+        else {
+          el.removeAttribute('readonly');
+          if (el.type === 'checkbox') el.disabled = false;
+        }
       }
     }
   });
@@ -329,6 +358,18 @@ function toggleLock() {
   }
 }
 
+// 數量增減輔助函數
+function stepValue(btn, delta) {
+  if (isLocked) return;
+  const wrapper = btn.closest('.stepper-group');
+  const input = wrapper.querySelector('.sensor-count');
+  let current = parseInt(input.value, 10) || 0;
+  let next = current + delta;
+  if (next < 0) next = 0;
+  input.value = next === 0 && input.value === "" ? "" : next;
+  validateAndCount();
+}
+
 function addRow(){
   const tbody = document.getElementById('tableBody');
   const row = tbody.insertRow();
@@ -338,12 +379,24 @@ function addRow(){
     <td><input type="checkbox"></td>
     <td><input type="checkbox"></td>
     <td><input type="checkbox"></td>
-    <td><input type="number" min="0" class="sensor-count" oninput="validateAndCount()"></td>
+    <td>
+      <div class="stepper-group">
+        <button type="button" class="stepper-btn" onclick="stepValue(this, -1)">-</button>
+        <input type="number" min="0" class="sensor-count" oninput="validateAndCount()">
+        <button type="button" class="stepper-btn" onclick="stepValue(this, 1)">+</button>
+      </div>
+    </td>
     <td><input type="text"></td>
     <td><input type="checkbox"></td>
     <td><input type="checkbox"></td>
     <td><input type="checkbox"></td>
-    <td><input type="number" min="0" class="sensor-count" oninput="validateAndCount()"></td>
+    <td>
+      <div class="stepper-group">
+        <button type="button" class="stepper-btn" onclick="stepValue(this, -1)">-</button>
+        <input type="number" min="0" class="sensor-count" oninput="validateAndCount()">
+        <button type="button" class="stepper-btn" onclick="stepValue(this, 1)">+</button>
+      </div>
+    </td>
     <td><input type="text"></td>
     <td><input type="checkbox"></td>
     <td><input type="checkbox"></td>
@@ -373,9 +426,13 @@ function addRow(){
   });
 
   if (isLocked) {
-    row.querySelectorAll('input, textarea').forEach(el => {
-      el.setAttribute('readonly', true);
-      if (el.type === 'checkbox') el.disabled = true;
+    row.querySelectorAll('input, textarea, button').forEach(el => {
+      if(el.classList.contains('stepper-btn') || el.classList.contains('delete-btn')) {
+        el.disabled = true;
+      } else {
+        el.setAttribute('readonly', true);
+        if (el.type === 'checkbox') el.disabled = true;
+      }
     });
   }
 }
