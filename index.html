@@ -106,29 +106,28 @@
     border: 1px solid #d9d9d9;
   }
 
-  /* センサ件数 統計標籤 */
-  .sensor-badge {
+  /* 完美的統計卡片樣式（對應圖片設計） */
+  .sensor-card {
     margin-left: auto;
-    padding: 6px 12px;
-    border-radius: 4px;
+    min-width: 140px;
+    padding: 6px 16px;
+    background: #ffffff;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .sensor-card-title {
+    font-size: 13px;
+    color: #595959;
     font-weight: bold;
-    font-size: 14px;
-    background-color: #f6ffed;
-    border: 1px solid #b7eb8f;
-    color: #389e0d;
-    transition: all 0.3s ease;
+    margin-bottom: 2px;
   }
-  .sensor-badge.has-anomaly {
-    background-color: #ff4d4f;
-    border-color: #ff4d4f;
-    color: #ffffff;
-    animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.8; }
-    100% { opacity: 1; }
+  .sensor-card-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ff4d4f;
+    line-height: 1.2;
   }
 
   button {
@@ -261,7 +260,11 @@
   <button class="print-btn" onclick="window.print()">印刷</button>
   <button id="lockBtn" class="lock-btn" onclick="toggleLock()">編集保護: OFF</button>
 
-  <div id="sensorBadge" class="sensor-badge">センサ件数: 0 件</div>
+  <!-- 圖片中的卡片樣式 -->
+  <div class="sensor-card">
+    <div class="sensor-card-title">センサ件数 (N/S)</div>
+    <div id="sensorValue" class="sensor-card-value">0</div>
+  </div>
 </div>
 
 <div class="table-container">
@@ -411,14 +414,9 @@ function validateAndCount() {
     }
   });
 
-  const badge = document.getElementById('sensorBadge');
-  if (badge) {
-    badge.textContent = `センサ件数: ${totalSensorAnomalies} 件`;
-    if (totalSensorAnomalies > 0) {
-      badge.classList.add('has-anomaly');
-    } else {
-      badge.classList.remove('has-anomaly');
-    }
+  const valEl = document.getElementById('sensorValue');
+  if (valEl) {
+    valEl.textContent = totalSensorAnomalies;
   }
 }
 
