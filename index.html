@@ -204,7 +204,6 @@
     resize: vertical;
   }
 
-  /* 數量高亮警示 */
   .sensor-input-anomaly {
     background-color: #ff4d4f !important;
     color: white !important;
@@ -262,7 +261,6 @@
   <button class="print-btn" onclick="window.print()">印刷</button>
   <button id="lockBtn" class="lock-btn" onclick="toggleLock()">編集保護: OFF</button>
 
-  <!-- 這裡已改為簡稱：センサ件数 -->
   <div id="sensorBadge" class="sensor-badge">センサ件数: 0 件</div>
 </div>
 
@@ -414,12 +412,13 @@ function validateAndCount() {
   });
 
   const badge = document.getElementById('sensorBadge');
-  badge.textContent = `センサ件数: ${totalSensorAnomalies} 件`;
-  
-  if (totalSensorAnomalies > 0) {
-    badge.classList.add('has-anomaly');
-  } else {
-    badge.classList.remove('has-anomaly');
+  if (badge) {
+    badge.textContent = `センサ件数: ${totalSensorAnomalies} 件`;
+    if (totalSensorAnomalies > 0) {
+      badge.classList.add('has-anomaly');
+    } else {
+      badge.classList.remove('has-anomaly');
+    }
   }
 }
 
@@ -486,32 +485,36 @@ function loadData(){
   const early = document.getElementById('early');
   const tableBody = document.getElementById('tableBody');
 
-  const o = JSON.parse(s);
-  productName.value = o.productName || "";
-  workDate.value = o.workDate || "";
-  leader.value = o.leader || "";
-  night.value = o.night || "";
-  late.value = o.late || "";
-  early.value = o.early || "";
-  tableBody.innerHTML = "";
-  
-  if(o.rows && o.rows.length > 0) {
-    o.rows.forEach(rd => {
-      addRow();
-      const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
-      c.forEach((el, i) => {
-        if(el.type === "checkbox") el.checked = rd[i];
-        else el.value = rd[i];
+  try {
+    const o = JSON.parse(s);
+    productName.value = o.productName || "";
+    workDate.value = o.workDate || "";
+    leader.value = o.leader || "";
+    night.value = o.night || "";
+    late.value = o.late || "";
+    early.value = o.early || "";
+    tableBody.innerHTML = "";
+    
+    if(o.rows && o.rows.length > 0) {
+      o.rows.forEach(rd => {
+        addRow();
+        const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
+        c.forEach((el, i) => {
+          if(el.type === "checkbox") el.checked = rd[i];
+          else el.value = rd[i];
+        });
       });
-    });
-  }
+    }
 
-  if(o.isLocked) {
-    toggleLock();
-  }
+    if(o.isLocked) {
+      toggleLock();
+    }
 
-  validateAndCount();
-  return true;
+    validateAndCount();
+    return true;
+  } catch(e) {
+    return false;
+  }
 }
 
 function clearData(){
@@ -538,34 +541,38 @@ function importFile(event){
   if(!file) return;
   const r = new FileReader();
   r.onload = function(e){
-    const o = JSON.parse(e.target.result);
-    document.getElementById('productName').value = o.productName || "";
-    document.getElementById('workDate').value = o.workDate || "";
-    document.getElementById('leader').value = o.leader || "";
-    document.getElementById('night').value = o.night || "";
-    document.getElementById('late').value = o.late || "";
-    document.getElementById('early').value = o.early || "";
-    
-    const tableBody = document.getElementById('tableBody');
-    tableBody.innerHTML = "";
-    if(o.rows && o.rows.length > 0) {
-      o.rows.forEach(rd => {
-        addRow();
-        const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
-        c.forEach((el, i) => {
-          if(el.type === "checkbox") el.checked = rd[i];
-          else el.value = rd[i];
+    try {
+      const o = JSON.parse(e.target.result);
+      document.getElementById('productName').value = o.productName || "";
+      document.getElementById('workDate').value = o.workDate || "";
+      document.getElementById('leader').value = o.leader || "";
+      document.getElementById('night').value = o.night || "";
+      document.getElementById('late').value = o.late || "";
+      document.getElementById('early').value = o.early || "";
+      
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = "";
+      if(o.rows && o.rows.length > 0) {
+        o.rows.forEach(rd => {
+          addRow();
+          const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
+          c.forEach((el, i) => {
+            if(el.type === "checkbox") el.checked = rd[i];
+            else el.value = rd[i];
+          });
         });
-      });
-    }
+      }
 
-    if(o.isLocked && !isLocked) {
-      toggleLock();
-    } else if(!o.isLocked && isLocked) {
-      toggleLock();
-    }
+      if(o.isLocked && !isLocked) {
+        toggleLock();
+      } else if(!o.isLocked && isLocked) {
+        toggleLock();
+      }
 
-    validateAndCount();
+      validateAndCount();
+    } catch(err) {
+      alert("ファイル形式が正しくありません。");
+    }
   };
   r.readAsText(file);
 }
@@ -601,19 +608,22 @@ function exportExcel(){
   ws['!cols'] = [{wch:15},{wch:8},{wch:8},{wch:8},{wch:8},{wch:20},{wch:8},{wch:8},{wch:8},{wch:8},{wch:20},{wch:8},{wch:8},{wch:8},{wch:15},{wch:15},{wch:15},{wch:30}];
   XLSX.utils.book_append_sheet(wb, ws, '欠点チェック表');
   
-  const pn = document.getElementById('
+  const pn = document.getElementById('productName').value || '未入力製品名';
   const wd = (document.getElementById('workDate').value || '未入力日付').replaceAll('-', '');
   XLSX.writeFile(wb, `抄紙4号機_${pn}_${wd}.xlsx`);
 }
 
-// 初始化
-const loaded = loadData();
-if(!loaded || document.querySelectorAll('#tableBody tr').length === 0){
-  for(let i = 0; i < 5; i++) addRow();
-}
-if(document.getElementById('workDate').value === ''){
-  document.getElementById('workDate').value = new Date().toISOString().split('T')[0];
-}
+// 頁面初始化
+window.addEventListener('DOMContentLoaded', () => {
+  const loaded = loadData();
+  if(!loaded || document.querySelectorAll('#tableBody tr').length === 0){
+    for(let i = 0; i < 5; i++) addRow();
+  }
+  if(document.getElementById('workDate').value === ''){
+    document.getElementById('workDate').value = new Date().toISOString().split('T')[0];
+  }
+  validateAndCount();
+});
 </script>
 </body>
 </html>
