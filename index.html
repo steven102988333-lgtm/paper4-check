@@ -162,7 +162,7 @@
 
   .main-table {
     width: 100%;
-    min-width: 1200px;
+    min-width: 1250px;
     border-collapse: collapse;
     font-size: 13px;
   }
@@ -203,28 +203,37 @@
     resize: vertical;
   }
 
-  /* 數量調整小群組（專為平板/手機友善設計） */
+  /* 強化手機/平板友善的 + / - 按鈕排版 */
   .stepper-group {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 1px;
+    width: 85px;
+    margin: 0 auto;
   }
   .stepper-btn {
-    background: #f0f0f0;
-    border: 1px solid #d9d9d9;
-    color: #333;
-    font-size: 12px;
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    color: #1677ff;
+    font-size: 14px;
     font-weight: bold;
-    width: 24px;
-    height: 26px;
+    width: 26px;
+    height: 28px;
     padding: 0;
     min-height: unset;
     border-radius: 3px;
     cursor: pointer;
+    flex-shrink: 0;
   }
   .stepper-btn:active {
-    background: #d9d9d9;
+    background: #bae7ff;
+  }
+  .main-table input.sensor-count {
+    width: 30px;
+    padding: 2px;
+    text-align: center;
+    font-weight: bold;
   }
 
   .sensor-input-anomaly {
@@ -358,7 +367,6 @@ function toggleLock() {
   }
 }
 
-// 數量增減輔助函數
 function stepValue(btn, delta) {
   if (isLocked) return;
   const wrapper = btn.closest('.stepper-group');
