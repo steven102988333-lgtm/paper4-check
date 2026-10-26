@@ -106,7 +106,7 @@
     border: 1px solid #d9d9d9;
   }
 
-  /* 統計標籤 (保留センサ件数) */
+  /* センサ件数 統計標籤 */
   .sensor-badge {
     margin-left: auto;
     padding: 6px 12px;
@@ -204,7 +204,7 @@
     resize: vertical;
   }
 
-  /* イメージセンサー數量高亮警示 */
+  /* 數量高亮警示 */
   .sensor-input-anomaly {
     background-color: #ff4d4f !important;
     color: white !important;
@@ -262,7 +262,8 @@
   <button class="print-btn" onclick="window.print()">印刷</button>
   <button id="lockBtn" class="lock-btn" onclick="toggleLock()">編集保護: OFF</button>
 
-  <div id="sensorBadge" class="sensor-badge">イメージセンサ異常件数: 0 件</div>
+  <!-- 這裡已改為簡稱：センサ件数 -->
+  <div id="sensorBadge" class="sensor-badge">センサ件数: 0 件</div>
 </div>
 
 <div class="table-container">
@@ -353,7 +354,6 @@ function addRow(){
     <td><button type="button" class="delete-btn" onclick="deleteRow(this)">削除</button></td>
   `;
 
-  // 鍵盤導覽 (Enter 鍵跳格 / 自動加行)
   const inputs = row.querySelectorAll('input:not([type=checkbox]), textarea');
   inputs.forEach((input, index) => {
     input.addEventListener('keydown', function(e) {
@@ -396,7 +396,6 @@ function deleteRow(btn){
   }
 }
 
-// 只計算イメージセンサー的數量與進行紅框高亮
 function validateAndCount() {
   let totalSensorAnomalies = 0;
 
@@ -415,7 +414,7 @@ function validateAndCount() {
   });
 
   const badge = document.getElementById('sensorBadge');
-  badge.textContent = `イメージセンサ異常件数: ${totalSensorAnomalies} 件`;
+  badge.textContent = `センサ件数: ${totalSensorAnomalies} 件`;
   
   if (totalSensorAnomalies > 0) {
     badge.classList.add('has-anomaly');
@@ -594,7 +593,7 @@ function exportExcel(){
     row.querySelectorAll('input,textarea').forEach(el => {
       r.push(el.type === 'checkbox' ? (el.checked ? '✔' : '') : el.value);
     });
-    r.pop(); // 移除操作按鈕欄
+    r.pop();
     data.push(r);
   });
   
@@ -602,7 +601,7 @@ function exportExcel(){
   ws['!cols'] = [{wch:15},{wch:8},{wch:8},{wch:8},{wch:8},{wch:20},{wch:8},{wch:8},{wch:8},{wch:8},{wch:20},{wch:8},{wch:8},{wch:8},{wch:15},{wch:15},{wch:15},{wch:30}];
   XLSX.utils.book_append_sheet(wb, ws, '欠点チェック表');
   
-  const pn = document.getElementById('productName').value || '未入力製品名';
+  const pn = document.getElementById('
   const wd = (document.getElementById('workDate').value || '未入力日付').replaceAll('-', '');
   XLSX.writeFile(wb, `抄紙4号機_${pn}_${wd}.xlsx`);
 }
