@@ -106,7 +106,7 @@
     border: 1px solid #d9d9d9;
   }
 
-  /* 統計標籤 */
+  /* 統計標籤 (保留センサ件数) */
   .sensor-badge {
     margin-left: auto;
     padding: 6px 12px;
@@ -362,7 +362,6 @@ function addRow(){
         if (index < inputs.length - 1) {
           inputs[index + 1].focus();
         } else {
-          // 若在當前行最後一個輸入框按 Enter，自動新增一行並聚焦到新行第一欄
           addMultipleRows();
           const newRows = document.querySelectorAll('#tableBody tr');
           const lastRowInputs = newRows[newRows.length - 1].querySelectorAll('input:not([type=checkbox]), textarea');
@@ -372,7 +371,6 @@ function addRow(){
     });
   });
 
-  // 如果目前是鎖定狀態，新加的行也套用唯讀
   if (isLocked) {
     row.querySelectorAll('input, textarea').forEach(el => {
       el.setAttribute('readonly', true);
@@ -521,7 +519,7 @@ function clearData(){
   if(!confirm("すべてのデータをクリアしてもよろしいですか？この操作は取り消せません。")) return;
   localStorage.removeItem("checkSheetData");
   
-  if(isLocked) toggleLock(); // 解除鎖定以清空
+  if(isLocked) toggleLock();
 
   document.getElementById('productName').value = "";
   document.getElementById('workDate').value = new Date().toISOString().split('T')[0];
