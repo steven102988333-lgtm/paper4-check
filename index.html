@@ -143,7 +143,8 @@
   button:hover { opacity: 0.85; }
   
   .add-btn { background: #1677ff; color: #fff; border: none; }
-  .export-btn { background: #52c41a; color: #fff; border: none; }
+  .export-btn { background: #52c41a; color: #fff; border: none; }          /* Excel 按鈕 (綠色) */
+  .import-btn { background: #2f54eb; color: #fff; border: none; }          /* JSON讀込 按鈕 (靛藍色) */
   .delete-btn { background: #ff4d4f; color: #fff; border: none; padding: 4px 8px; font-size: 12px; min-height: 30px; }
   .save-btn { background: #fa8c16; color: #fff; border: none; }
   .clear-btn { background: #cf1322; color: #fff; border: none; }
@@ -251,8 +252,10 @@
   
   <button class="save-btn" onclick="saveAsFile()">名前を付けて保存</button>
   <button class="clear-btn" onclick="clearData()">データをクリア</button>
+  
   <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFile(event)">
-  <button class="export-btn" onclick="document.getElementById('fileInput').click()">JSON読込</button>
+  <button class="import-btn" onclick="document.getElementById('fileInput').click()">JSON読込</button>
+  
   <button class="export-btn" onclick="exportExcel()">Excel出力</button>
   <button class="print-btn" onclick="window.print()">印刷</button>
 
@@ -364,6 +367,13 @@ function validateAndCount() {
 }
 
 async function saveAsFile(){
+  const productName = document.getElementById('productName');
+  const workDate = document.getElementById('workDate');
+  const leader = document.getElementById('leader');
+  const night = document.getElementById('night');
+  const late = document.getElementById('late');
+  const early = document.getElementById('early');
+
   const data = {
     productName: productName.value,
     workDate: workDate.value,
@@ -409,6 +419,15 @@ async function saveAsFile(){
 function loadData(){
   const s = localStorage.getItem("checkSheetData");
   if(!s) return false;
+  
+  const productName = document.getElementById('productName');
+  const workDate = document.getElementById('workDate');
+  const leader = document.getElementById('leader');
+  const night = document.getElementById('night');
+  const late = document.getElementById('late');
+  const early = document.getElementById('early');
+  const tableBody = document.getElementById('tableBody');
+
   const o = JSON.parse(s);
   productName.value = o.productName || "";
   workDate.value = o.workDate || "";
@@ -417,14 +436,17 @@ function loadData(){
   late.value = o.late || "";
   early.value = o.early || "";
   tableBody.innerHTML = "";
-  o.rows.forEach(rd => {
-    addRow();
-    const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
-    c.forEach((el, i) => {
-      if(el.type === "checkbox") el.checked = rd[i];
-      else el.value = rd[i];
+  
+  if(o.rows && o.rows.length > 0) {
+    o.rows.forEach(rd => {
+      addRow();
+      const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
+      c.forEach((el, i) => {
+        if(el.type === "checkbox") el.checked = rd[i];
+        else el.value = rd[i];
+      });
     });
-  });
+  }
   validateAndCount();
   return true;
 }
@@ -432,14 +454,16 @@ function loadData(){
 function clearData(){
   if(!confirm("すべてのデータをクリアしてもよろしいですか？この操作は取り消せません。")) return;
   localStorage.removeItem("checkSheetData");
+  
+  document.getElementById('productName').value = "";
+  document.getElementById('workDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('leader').value = "";
+  document.getElementById('night').value = "";
+  document.getElementById('late').value = "";
+  document.getElementById('early').value = "";
+  
   document.getElementById("tableBody").innerHTML = "";
   for(let i = 0; i < 5; i++) addRow();
-  productName.value = "";
-  workDate.value = "";
-  leader.value = "";
-  night.value = "";
-  late.value = "";
-  early.value = "";
   validateAndCount();
   alert("データをクリアしました");
 }
@@ -450,21 +474,25 @@ function importFile(event){
   const r = new FileReader();
   r.onload = function(e){
     const o = JSON.parse(e.target.result);
-    productName.value = o.productName || "";
-    workDate.value = o.workDate || "";
-    leader.value = o.leader || "";
-    night.value = o.night || "";
-    late.value = o.late || "";
-    early.value = o.early || "";
+    document.getElementById('productName').value = o.productName || "";
+    document.getElementById('workDate').value = o.workDate || "";
+    document.getElementById('leader').value = o.leader || "";
+    document.getElementById('night').value = o.night || "";
+    document.getElementById('late').value = o.late || "";
+    document.getElementById('early').value = o.early || "";
+    
+    const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = "";
-    o.rows.forEach(rd => {
-      addRow();
-      const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
-      c.forEach((el, i) => {
-        if(el.type === "checkbox") el.checked = rd[i];
-        else el.value = rd[i];
+    if(o.rows && o.rows.length > 0) {
+      o.rows.forEach(rd => {
+        addRow();
+        const c = document.querySelector("#tableBody tr:last-child").querySelectorAll("input,textarea");
+        c.forEach((el, i) => {
+          if(el.type === "checkbox") el.checked = rd[i];
+          else el.value = rd[i];
+        });
       });
-    });
+    }
     validateAndCount();
   };
   r.readAsText(file);
@@ -479,7 +507,12 @@ function exportExcel(){
   data.push(['日付', document.getElementById('workDate').value]);
   data.push([]);
   data.push(['職長','夜番','遅番','早番']);
-  data.push([leader.value, night.value, late.value, early.value]);
+  data.push([
+    document.getElementById('leader').value,
+    document.getElementById('night').value,
+    document.getElementById('late').value,
+    document.getElementById('early').value
+  ]);
   data.push([]);
   data.push(['LotNo','N異物','Nスジ','N押跡','N数','N内容','S異物','Sスジ','S押跡','S数','S内容','穴','フクレ','羽根','波形状態','走査周波数(kHz)','調光設定','備考']);
   
