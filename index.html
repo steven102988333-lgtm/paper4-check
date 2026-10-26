@@ -143,12 +143,14 @@
   button:hover { opacity: 0.85; }
   
   .add-btn { background: #1677ff; color: #fff; border: none; }
-  .export-btn { background: #52c41a; color: #fff; border: none; }          /* Excel 按鈕 (綠色) */
-  .import-btn { background: #2f54eb; color: #fff; border: none; }          /* JSON讀込 按鈕 (靛藍色) */
+  .export-btn { background: #52c41a; color: #fff; border: none; }
+  .import-btn { background: #2f54eb; color: #fff; border: none; }
   .delete-btn { background: #ff4d4f; color: #fff; border: none; padding: 4px 8px; font-size: 12px; min-height: 30px; }
   .save-btn { background: #fa8c16; color: #fff; border: none; }
   .clear-btn { background: #cf1322; color: #fff; border: none; }
   .print-btn { background: #722ed1; color: #fff; border: none; }
+  .lock-btn { background: #595959; color: #fff; border: none; }
+  .lock-btn.locked { background: #d9d9d9; color: #595959; font-weight: bold; }
 
   .table-container {
     width: 100%;
@@ -258,6 +260,7 @@
   
   <button class="export-btn" onclick="exportExcel()">Excel出力</button>
   <button class="print-btn" onclick="window.print()">印刷</button>
+  <button id="lockBtn" class="lock-btn" onclick="toggleLock()">編集保護: OFF</button>
 
   <div id="sensorBadge" class="sensor-badge">イメージセンサ異常件数: 0 件</div>
 </div>
@@ -296,6 +299,34 @@
 </div>
 
 <script>
+let isLocked = false;
+
+function toggleLock() {
+  isLocked = !isLocked;
+  const btn = document.getElementById('lockBtn');
+  const elements = document.querySelectorAll('input, textarea, select');
+  
+  elements.forEach(el => {
+    if (el.id !== 'rowCountSelect' && el.id !== 'fileInput') {
+      if (isLocked) {
+        el.setAttribute('readonly', true);
+        if (el.type === 'checkbox') el.disabled = true;
+      } else {
+        el.removeAttribute('readonly');
+        if (el.type === 'checkbox') el.disabled = false;
+      }
+    }
+  });
+
+  if (isLocked) {
+    btn.textContent = "編集保護: ON";
+    btn.classList.add('locked');
+  } else {
+    btn.textContent = "編集保護: OFF";
+    btn.classList.remove('locked');
+  }
+}
+
 function addRow(){
   const tbody = document.getElementById('tableBody');
   const row = tbody.insertRow();
@@ -321,9 +352,37 @@ function addRow(){
     <td><textarea rows="1"></textarea></td>
     <td><button type="button" class="delete-btn" onclick="deleteRow(this)">削除</button></td>
   `;
+
+  // 鍵盤導覽 (Enter 鍵跳格 / 自動加行)
+  const inputs = row.querySelectorAll('input:not([type=checkbox]), textarea');
+  inputs.forEach((input, index) => {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        } else {
+          // 若在當前行最後一個輸入框按 Enter，自動新增一行並聚焦到新行第一欄
+          addMultipleRows();
+          const newRows = document.querySelectorAll('#tableBody tr');
+          const lastRowInputs = newRows[newRows.length - 1].querySelectorAll('input:not([type=checkbox]), textarea');
+          if (lastRowInputs.length > 0) lastRowInputs[0].focus();
+        }
+      }
+    });
+  });
+
+  // 如果目前是鎖定狀態，新加的行也套用唯讀
+  if (isLocked) {
+    row.querySelectorAll('input, textarea').forEach(el => {
+      el.setAttribute('readonly', true);
+      if (el.type === 'checkbox') el.disabled = true;
+    });
+  }
 }
 
 function addMultipleRows() {
+  if (isLocked) return;
   const count = parseInt(document.getElementById('rowCountSelect').value, 10) || 1;
   for(let i = 0; i < count; i++) {
     addRow();
@@ -332,6 +391,7 @@ function addMultipleRows() {
 }
 
 function deleteRow(btn){
+  if (isLocked) return;
   if(confirm('この行を削除してもよろしいですか？')) {
     btn.closest('tr').remove();
     validateAndCount();
@@ -381,6 +441,7 @@ async function saveAsFile(){
     night: night.value,
     late: late.value,
     early: early.value,
+    isLocked: isLocked,
     rows: []
   };
   document.querySelectorAll("#tableBody tr").forEach(row => {
@@ -447,6 +508,11 @@ function loadData(){
       });
     });
   }
+
+  if(o.isLocked) {
+    toggleLock();
+  }
+
   validateAndCount();
   return true;
 }
@@ -455,6 +521,8 @@ function clearData(){
   if(!confirm("すべてのデータをクリアしてもよろしいですか？この操作は取り消せません。")) return;
   localStorage.removeItem("checkSheetData");
   
+  if(isLocked) toggleLock(); // 解除鎖定以清空
+
   document.getElementById('productName').value = "";
   document.getElementById('workDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('leader').value = "";
@@ -493,6 +561,13 @@ function importFile(event){
         });
       });
     }
+
+    if(o.isLocked && !isLocked) {
+      toggleLock();
+    } else if(!o.isLocked && isLocked) {
+      toggleLock();
+    }
+
     validateAndCount();
   };
   r.readAsText(file);
